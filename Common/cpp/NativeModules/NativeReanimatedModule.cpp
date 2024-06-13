@@ -71,6 +71,7 @@ NativeReanimatedModule::NativeReanimatedModule(
     PlatformDepMethodsHolder platformDepMethodsHolder)
     : NativeReanimatedModuleSpec(jsInvoker),
       RuntimeManager(rt, errorHandler, scheduler, RuntimeType::UI),
+      layoutAnimationsProxy_(layoutAnimationsProxy),
       mapperRegistry(std::make_shared<MapperRegistry>()),
       eventHandlerRegistry(std::make_shared<EventHandlerRegistry>()),
       requestRender(platformDepMethodsHolder.requestRender),
@@ -83,7 +84,7 @@ NativeReanimatedModule::NativeReanimatedModule(
     maybeRequestRender();
   };
 
-  this->layoutAnimationsProxy = layoutAnimationsProxy;
+  this->layoutAnimationsProxy_ = layoutAnimationsProxy;
 
   RuntimeDecorator::decorateUIRuntime(
       *runtime,
@@ -253,6 +254,20 @@ jsi::Value NativeReanimatedModule::enableLayoutAnimations(
     jsi::Runtime &rt,
     const jsi::Value &config) {
   FeaturesConfig::setLayoutAnimationEnabled(config.getBool());
+  return jsi::Value::undefined();
+}
+
+jsi::Value NativeReanimatedModule::configureLayoutAnimation(
+    jsi::Runtime &rt,
+    const jsi::Value &viewTag,
+    const jsi::Value &type,
+    const jsi::Value &config,
+    const jsi::Value &viewSharedValue) {
+  layoutAnimationsProxy_->configureAnimation(
+      viewTag.asNumber(),
+      type.asString(rt).utf8(rt),
+      ShareableValue::adapt(rt, config, this),
+      ShareableValue::adapt(rt, viewSharedValue, this));
   return jsi::Value::undefined();
 }
 
